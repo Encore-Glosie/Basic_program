@@ -1,0 +1,493 @@
+# 牛一
+## K
+```cpp
+- e[i][j]：表示第 i 个房间第 j 个门通向哪个房间（最多 3 个门）；
+- d[i]：房间 i 有几个门；
+- ans[i][j]：表示从房间 i 的第 j个门出发，最终可以走过多少条走廊；
+- vis[i][j]：表示房间 i 的第 j 个门是否已经访问过（防止死循环）；
+- mp[u][v]：记录是否已经走过边 (u, v)（因为每条边只能计一次）。
+- 
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 2e5+10;
+int e[N][5],d[N],ans[N][5],vis[N][5];
+map<int,map<int,bool>>mp;
+int dfs(int u,int num,int cnt){
+	vis[u][num] = 1;
+	int v = e[u][num];
+	int nex;
+	for(int i=0;i<d[v];i++){
+		if(e[v][i] == u)
+			nex = (i + 1) % d[v];
+	} 
+	int st = mp[u][v];
+	mp[u][v] = 1;
+	mp[v][u] = 1;
+	if(vis[v][nex]){
+		return ans[u][num] = !st + cnt;
+	}
+	else return ans[u][num] = dfs(v,nex,!st + cnt);
+	
+} 
+void solve(){
+	int n;
+	cin>>n;
+	for(int i=1;i<=n;i++){
+		cin>>d[i];
+		for(int j=0;j<d[i];j++){
+			cin>>e[i][j];
+		}		
+	}
+	for(int i=1;i<=n;i++){
+		if(!ans[i][0]){
+			mp.clear();
+			dfs(i,0,0);
+		}
+		cout<<ans[i][0]<<endl;
+	}
+
+}
+signed main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    //cin>>T;
+	while(T--)solve(); 
+	return 0;
+}
+
+```
+## L
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define ll long long
+#define int long long 
+#define lowbit(x) ((x)&(-x))
+const int N=2e5+7;
+int tri[N<<1],a[N],qs;
+vector<int>all;
+pair<int,int>id[N];
+void add(int idx,int k){//向上更新父节点
+    for(int i=idx;i<=all.size();i+=lowbit(i))tri[i]+=k;
+}
+int sum(int idx){//向下累加子节点
+    int tot=0;
+    for(int i=idx;i;i-=lowbit(i))tot+=tri[i];
+    return tot;
+}
+int bs(int k){//查找
+    int pos=0,mxn=1<<20;
+    for(int i=mxn;i>0;i>>=1){
+       if(pos+i<=all.size()&&tri[pos+i]<=k){
+        pos+=i;  k-=tri[pos];
+       } 
+    }
+    return pos;
+}
+void solve(){
+    int n,q;
+    all.clear();
+    cin>>n>>q; qs=n-(n/2);
+    for(int i=1;i<=n;++i)cin>>a[i],all.emplace_back(a[i]);
+    for(int i=1;i<=q;++i){
+        cin>>id[i].first>>id[i].second;
+        a[id[i].first]+=id[i].second;
+        all.emplace_back(a[id[i].first]);
+    }
+    for(int i=1;i<=q;++i)a[id[i].first]-=id[i].second;
+    sort(all.begin(),all.end());
+    all.erase(unique(all.begin(),all.end()),all.end());//去重
+    fill(tri+1,tri+all.size()+2,0);
+    for(int i=1;i<=n;++i){
+        int idx=lower_bound(all.begin(),all.end(),a[i])-all.begin()+1;
+        add(idx,1);
+    }
+    for(int i=1;i<=q;++i){
+        int p=id[i].first,v=id[i].second;
+        int idx=lower_bound(all.begin(),all.end(),a[p])-all.begin()+1;
+        add(idx,-1);
+        a[p]+=v;
+        int new_idx=lower_bound(all.begin(),all.end(),a[p])-all.begin()+1;
+        add(new_idx,1);
+        cout<<sum(bs(qs))<<endl;
+    }
+}
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin>>T;
+    while(T--)solve();
+    return 0;
+}
+
+
+```
+
+
+#  牛二
+
+```cpp
+## A
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=5e5+7,mod=998244353;
+int s[N],sum[N]={1};
+void solve(){
+	int n,ans=0,cnt=0;
+	cin>>n;
+	for(int i=1;i<=n;i++) cin>>s[i], cnt+=(s[i]==-1);
+	for(int i=1;i<=n;i++){//只看(能)新增加的1
+		if(s[i]==1&&s[i-1]==0) ans=(ans+sum[cnt])%mod;//01
+		else if(s[i]==1&&s[i-1]==-1) ans=(ans+sum[cnt-1])%mod;
+		else if(s[i]==-1&&s[i-1]==0) ans=(ans+sum[cnt-1])%mod;
+		else if(s[i]==-1&&s[i-1]==-1) ans=(ans+sum[cnt-2])%mod;
+	}
+	cout<<ans%mod<<endl;
+	return ;
+}
+signed main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	for(int i=1;i<N;i++) sum[i]=(sum[i-1]<<1)%mod;
+	int T=1;
+    cin>>T;
+    while(T--)solve();
+	return 0;
+}
+```
+
+
+
+# 牛五
+## [I-Block Combination Minimal Perimeter_2025牛客暑期多校训练营5](https://ac.nowcoder.com/acm/contest/108302/I)
+*不要陷入经验主义而把题目理解错了，不会的时候就多读题！！！*
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+//#define int long long
+#define ll long long
+const int N=1e6+5,mod=1e9+7;
+//长度为i的小长方形是一体的，不能拆成1个1个的小正方形！！！
+//那么就只能以最高或以上的为齐了
+void solve(){
+   int n; cin>>n;
+   cout<<2*(n+1+n/2)<<endl;
+}
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+   // cin>>T;
+    while(T--)solve();
+    return 0;
+}
+
+```
+# 牛7
+# [C-Forsaken City_"现代汽车前瞻杯"2025牛客暑期多校训练营7](https://ac.nowcoder.com/acm/contest/108304/C)
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+const int N=2e5+7,inf=0x3f3f3f3f;
+void solve(){
+    int n,mx=0,ans=0; cin>>n;
+    vector<int>a(n+1);
+    for(int i=1;i<=n;++i)cin>>a[i];
+    //应该是记录后面的最小值
+    int mn=a[n];
+    for(int i=n-1;i;--i){
+        mn=min(a[i],mn);
+        ans=max(ans,a[i]-mn);
+    }
+    cout<<ans<<endl;
+}
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin>>T;
+    while(T--)solve();
+    return 0;
+}
+/*3 1 4 2*/
+```
+#  [G-Nice Doppelgnger_"现代汽车前瞻杯"2025牛客暑期多校训练营7](https://ac.nowcoder.com/acm/contest/108304/G)
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define int long long
+#define endl "\n"
+const int N=1e6+7;
+//求质因子
+int pre[N], vis[N],tot,cnt[N];
+void Eulr(){
+    for(int i=2;i<N;++i){
+        if(!vis[i])vis[i]=i,pre[++tot]=i;
+        for(int j=1;j<=tot;++j){
+            if(pre[j]>N/i)break;// !!如果改用 >=，当 pre[j] == N / i 时可能会越界。
+            vis[i*pre[j]]=pre[j];//这里把标记的是一个数的最小质因子
+            if(i%pre[j]==0)break;
+        }
+    }
+    for(int i=2;i<N;++i){
+       int t=i;
+        while(t!=1){
+            ++cnt[i];
+            t/=vis[t];
+//这里直接一直除当前数的最小质因子，比全遍历更好
+        }
+    }
+}
+void solve(){
+    int n,f=0; cin>>n;
+    for(int i=2;i<=n;++i){
+        if(cnt[i]&1){
+            ++f;
+            cout<<i<<" \n"[f==n/2];
+            if(f==n/2)break;
+            }
+        }
+    }
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+     Eulr();
+    cin>>T;
+    while(T--)solve();
+    return 0;
+}
+```
+
+### 为什么可以这样填充？
+
+这个问题的解法基于**循环矩阵**和**互质性**（gcd(n, m) = 1）的特性。当 `n` 和 `m` 互质时，我们可以构造一个满足条件的矩阵，否则无解。以下是详细解释：
+
+---
+
+### **1. 互质性保证填充路径不重复**
+
+- **关键观察**：如果 `gcd(n, m) = 1`，则从 `(0, 0)` 出发，按照某种步长移动时，可以覆盖所有格子而不重复。
+    
+- **数学依据**：类似于**数论中的模运算**，如果 `n` 和 `m` 互质，则 `(k * a) % n` 和 `(k * b) % m` 可以遍历所有可能的余数组合（中国剩余定理的简化情况）。
+    
+- **填充策略**：
+    
+    - 每次移动 `i` 步（`i` 是当前数字），交替改变方向（`x` 或 `y`）。
+        
+    - 如果 `y` 方向移动失败（目标位置已被占用），则改为 `x` 方向移动，并反转方向（`opy = -opy` 或 `opx = -opx`）。
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+#define int long long
+const int mxn = 2e5 + 7;
+//互质性和方向交替
+void solve(){
+    int n, m; cin >> n >> m;
+    vector<vector<int>>g(n, vector<int>(m, 0));
+    if(__gcd(n, m) != 1){cout << "NO\n"; return ;}
+    int fx = 1, fy = -1, x = 0, y =0;
+    for(int i = 0; i < n * m; ++i){
+        if(!g[x][(y + fy * i % m + m) % m]) y = (y + fy * i % m + m) % m, fy = -fy;
+        else x = (x + fx * i % n + n) % n, fx = -fx;
+        g[x][y] = i + 1;
+    }
+    cout << "YES\n";
+    for(int i = 0; i < n; ++i)
+        for(int j = 0; j < m; ++j)
+            cout << g[i][j] << " \n"[j == m - 1];
+}
+
+signed main() {
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int T = 1;
+    //cin >> T;
+    while (T--) solve();
+    return 0;
+}
+
+```
+
+team0242, 714357
+https://acm.hdu.edu.cn/contests/contest_list.php
+
+# [1010 中位数](https://acm.hdu.edu.cn/contest/problem?cid=1172&pid=1010)
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+#define endl "\n"
+//#define ll long long
+//const int N=2e3+5;
+void solve() {
+    int ans=0;
+    int n; cin>>n;
+    int m=2*n+5;
+    vector<int>a(n+1),sum(n+1);
+    for(int i=1;i<=n;++i)cin>>a[i];
+    for(int i=1;i<=n;++i){
+        sum[0]=0;//对于每一个a[i]所在的区间
+        for(int j=1;j<=n;++j)
+        sum[j]=sum[j-1]+(a[j]>a[i]?1:(a[j]<a[i]?-1:0));
+        vector<int>l0(m),r0(m),l1(m),r1(m);
+
+        for(int j=1;j<=i;++j){
+            int idx=sum[j-1]+n;
+            if(j&1)l1[idx]+=j;
+            else l0[idx]+=j;
+        }
+
+        for(int j=i;j<=n;++j){
+            int idx=sum[j]+n;
+            if(j&1)r1[idx]+=j;
+            else r0[idx]+=j;
+        }
+
+        int t=0;
+        for(int j=0;j<m;++j)
+            t+=l0[j]*r0[j]+l1[j]*r1[j];
+
+        ans+=t*a[i];
+    }
+    cout<<ans<<endl;
+}
+signed main() {
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin >> T;
+    while (T--)solve();
+    return 0;
+}
+
+```
+# [1009 子序列](https://acm.hdu.edu.cn/contest/problem?cid=1172&pid=1009)
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+//#define int long long
+#define endl "\n"
+//#define ll long long
+//const int N=2e3+5;
+void solve() {
+    int n; cin>>n;
+    vector<int>a(n+1),id(n+1);
+    for(int i=1;i<=n;++i)cin>>a[i],id[a[i]]=i;
+    if(n==1){cout<<1<<endl;return;}
+    int l=n+1,r=0,cur=0,cnt=0,mx=0;
+    for(int i=n;i;--i){
+        int p=id[i];//较大数的位置
+        l=min(l,p); r=max(r,p);
+        ++cnt;//记录大值
+        cur=r-l-(cnt-1)+2;
+        mx=max(mx,cur);
+    }
+    cout<<mx<<endl;
+}
+signed main() {
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin >> T;
+    while (T--)solve();
+    return 0;
+}
+
+```
+# [1009 量子弹弓](https://acm.hdu.edu.cn/contest/problem?cid=1175&pid=1009)
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+//#define int long long
+#define ll long long
+const int N=1e6+5,mod=1e9+7;
+int a[N];
+void solve(){
+    int n,f=0; cin>>n;
+    ll sum=0;
+    for(int i=1;i<=n;++i){
+        cin>>a[i];
+        if(!a[i])f=1;
+        sum+=a[i];
+        }
+  
+    if(f||sum<2*(n-1))cout<<"NO\n";
+    else cout<<"YES\n";
+}
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin>>T;
+    while(T--)solve();
+    return 0;
+}
+```
+
+# [1001 电子带负电](https://acm.hdu.edu.cn/contest/problem?cid=1175&pid=1001)
+### 取模运算最好分多步乘法来写，确保取模取到位
+### 在取模运算中一般不能右除法，要用的话就用逆元乘法！
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define int long long
+#define ll long long
+const int N=2e5+5,mod=998244353;
+int a[N];
+int pm(int a, int b, int mod) {
+    int res = 1;
+    while (b) {
+        if (b & 1) res = (res * a) % mod;
+        a = (a * a) % mod;
+        b >>= 1;
+    }
+    return res;
+}
+// 费马小定理求逆元（m 必须是质数）
+int fm(int a, int m) {
+    return pm(a, m - 2, m);
+}
+
+void solve(){
+   int n; cin>>n ;
+   int sum=0,l=1,r=n,f=0,ans=0,mx=0,mn=n;
+   for(int i=1;i<=n;++i){
+    cin>>a[i];
+     if(a[i]==0){if(f==0)++l; continue;}
+    mx=max(mx,a[i]);
+    mn=min(mn,a[i]);
+    sum+=a[i];
+     f=1;
+   }
+   for(int i=n;i;--i){
+    if(a[i]==0)--r;
+    else break;
+   }
+   //cout<<mn<<" "<<mx<<" "<<l<<" "<<r<<endl;
+      if(!f) {
+       //分步计算，确保每步都取模
+        int inv2 = fm(2, mod);
+        ans = ( (n % mod) * ((n + 1) % mod) ) % mod; //对结果再取模
+        ans = (ans * inv2) % mod;                     
+        ans = (ans * ((n + 1) % mod)) % mod;         
+        ans = (ans * ((n + 1) % mod)) % mod;          
+    } 
+    else {
+        ans = ( (l % mod) * ((n - r + 1) % mod) ) % mod;
+        ans = (ans * ((mn + n + 1) % mod)) % mod;
+        ans = (ans * ((n - mx + 1) % mod)) % mod;
+    }
+    
+    cout << sum  << " " << ans << endl;
+}
+signed main(){
+    ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+    int T=1;
+    cin>>T;
+    while(T--)solve();
+    return 0;
+}
+```
