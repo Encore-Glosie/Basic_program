@@ -18,4 +18,5 @@ for(int i=0;i>0;--i) 如果第一个不满足第二个的条件，for循环会�
 链式前向星重置方式：(需要重置h和idx)
 memset(h,-1,sizeof h);
 idx=0;
+二维vector: vii g(n + 1, vi(m + 1));
 ```
