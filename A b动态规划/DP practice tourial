@@ -1,0 +1,588 @@
+# [1-F. Clique in the Divisibility Graph](https://codeforces.com/problemset/problem/566/F)
+## 动态规划+数学
+
+<details>
+<summary>点击查看解析</summary>
+
+**提示 1：** 一个团表示原图的一个子图，其中点两两连了一条无向边。那么在题中对图的定义下，团中点满足什么性质？
+
+**提示 2：** 如何找到满足性质的最大子集？
+
+我们先看提示 1，一个团中点两两连线，而根据题目的定义，连线的点对应的数应当满足整除关系。因此一个团内所有的点可以两两满足整除关系。
+
+我们从小到大考虑每一个数，则大的数得被所有比它小的数整除。考虑排序后的数组为 $a_1,a_2,\dots,a_n$ ，则 $a_{i+1}$ 能被 $a_1,a_2,\dots,a_i$ 整除。
+
+事实上，上述条件可以简化为对于每一个 $i$ 有 $a_{i+1}$ 被 $a_i$ 整除，因为 $a_i$ 已经可以被 $a_1,a_2,\dots,a_{i-1}$ 整除了， $a_i$ 已经包含了所有必要的整除信息。
+
+综上所述，我们只需要找到一个最大的集合，使其排序后相邻两项满足整出关系。
+
+如何找到最大集合呢？我们考虑使用 DP 。
+
+假设我们目前找到的以 $x$ 作为最大元素的集合至多有 $k$ 个元素，则其下一个元素可能是 $2x,3x,\dots$ ，我们枚举下一个元素进行状态转移即可。（这么看题目对于数字两两不同的限制还是挺多余的）
+
+为什么这样做是合理的呢？因为我们元素有上界 $10^6$ ，因此对于 $x$ 状态的转移次数为 $\frac{10^6}{x}$ ，于是，我们可以得到总状态转移次数是 $\sum\limits_{x=1}^{10^6}\frac{10^6}{x}=10^6\sum\limits_{x=1}^{10^6}\frac{1}{x}=\mathcal{O}(10^6\log 10^6)$ .
+
+于是时间复杂度为 $\mathcal{O}(M\log M)$ .
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+const int N = 1e6 + 7;
+int dp[N];
+void solve(){
+	int n, x, ans=1; cin >> n;
+	for(int i = 1; i <= n; ++ i){
+		cin >> x; ++dp[x];
+		for(int j = x << 1; j < N; j += x){// j是x的倍数, 往后更新
+			dp[j] = max(dp[x], dp[j]);// x的圈内大还是j的圈内大
+		}
+		ans = max(ans, dp[x]);
+	}
+	cout << ans << endl;
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1;
+	//cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
+
+# [2-A. Functions again](https://codeforces.com/problemset/problem/788/A)
+### DP
+
+<details>
+<summary>点击查看解析</summary>
+
+**提示 1：** 给的函数中 |ai−ai+1| 没有意义，去掉它看看你求的东西到底是啥。
+
+**提示 2：** 把求和式展开。
+
+这里，我们先设 bi=|ai−ai+1| ，那么我们所求变为 ∑i=lr−1(−1)i−lbi ，与 ai 无关，接下来我们只考虑数组 bi ，看这个变量如何求出最值。
+
+我们将求和式展开，为了方便观察。
+
+∑i=lr−1(−1)i−lbi=bl−bl+1+bl+2−⋯+(−1)r−1−lbr−1
+
+于是相当于取一个子数组，进行加一项减一项的操作，使计算结果最大。
+
+我们使用 DP 解决对应的问题。
+
+考虑在第 i 个位置结束的长度为奇数 / 偶数的子数组，对应的最大和为 dp1[i]，dp2[i] 。
+
+那么，我们考虑 i+1 号位置，那么有如下可能：
+
+- 数组从 i+1 开始，那么 dp1[i+1] 可能直接取 bi+1 。
+    
+- 否则一定是之前开始的数组添加一项。
+    
+    - 如果之前的数组长度为奇数，那么加上这个元素之后长度是偶数。故 dp2[i+1] 用 dp1[i]−bi+1 更新。
+        
+    - 如果之前的数组长度为偶数，那么加上这个元素之后长度是奇数。故 dp1[i+1] 用 dp2[i]+bi+1 更新。
+        
+
+最后我们统计这里所有结果的最大值即可。又由于 dp2[i] 计算过程的最后一项一定是负数，故不可能构成答案，可以不予考虑。
+
+时间复杂度为 O(n) .
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl "\n"
+#define int long long
+const int N=2e5+5,inf=0xc0c0c0c0;
+
+int dp[N][2];
+void solve(){
+int n; cin>>n;
+memset(dp,0xc0,sizeof dp);
+vector<int>a(n+1),b(n+1);
+int ans=0;
+for(int i=1;i<=n;++i)cin>>a[i];
+for(int i=1;i<n;++i){
+    dp[i+1][0]=dp[i][1]-abs(a[i+1]-a[i]);
+    dp[i+1][1]=max(dp[i][0],0LL)+abs(a[i+1]-a[i]);
+    ans=max(ans, dp[i+1][1]);
+}
+cout<<ans<<endl;
+}
+signed main(){
+	ios::sync_with_stdio(0),cin.tie(0),cout.tie(0);
+	int T=1;
+	//cin>>T;
+	while(T--)solve();
+	return 0;
+}
+```
+# [3-D. Decorate Apple Tree](https://codeforces.com/problemset/problem/1056/D)
+### 树形DP+DFS+构造Tree
+
+<details>
+<summary>点击查看解析</summary>
+
+
+**提示 1：** 如果要子树中叶子节点颜色都不同，一定是包含叶子节点越少的点更容易满足要求。
+
+**提示 2：** 如何统计每个子树包含了几个叶子节点。
+
+首先，看提示 1，我们应该按照子树叶子节点数量从小到大的顺序遍历各个子树。
+
+因此我们应当先统计每一个子树中包含的叶子节点大小。
+
+这件事可以直接使用树形 DP 完成，每个节点对应子树的叶子节点数量，等于子节点对应字数的叶子节点数量之和。
+
+而如果要一棵子树内叶子节点颜色完全不同，至少需要的颜色数量等于叶子节点的数量。
+
+因此，如果要 k 个子树内叶子节点颜色完全不同，我们至少得满足这 k 个子树的叶子节点数量都小于颜色的数量，即颜色数量不小于第 k 小的子树。
+
+那么这个最小值可以取到吗？答案是肯定的。
+
+我们一开始给整棵树全部赋颜色 1 ，接下来，一旦我们按照叶子节点从小到大的顺序遍历子树，遍历到每个子树的时候，重新对该子树内的叶子节点赋值 1，2，…，cnt 即可（设该子树内的叶子节点共有 cnt 个）。
+
+时间复杂度为 O(n) ，树形 DP 是 O(n) 的，后面的排序最大值不超过 n ，因此排序是可以 O(n) 完成的。
+
+</details>
+
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+int main() {
+    ios::sync_with_stdio(0), cin.tie(0);
+    int n; cin >> n; vector<int> p(n);
+    for (int i = 1; i < n; ++i) {
+        cin >> p[i];
+        p[i]--; 
+    }
+    vector<int> ans(n, 1);
+    for (int i = 1; i < n; ++i) 
+        ans[p[i]] = 0; 
+        
+    for (int i = n - 1; i > 0; --i) 
+        ans[p[i]] += ans[i];
+    
+    sort(ans.begin(), ans.end());
+    for (int i = 0; i < n; ++i) 
+        cout << ans[i] << " \n"[i == n - 1];
+    return 0;
+}
+```
+###### DFS做法：
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+const int N = 1e5 + 7;
+int dp[N], ne[N << 1], e[N << 1], h[N << 1], p[N], du[N], idx;
+void add(int a, int b){
+	e[idx] = b;
+	ne[idx] = h[a];
+	h[a] = idx++;
+}
+void dfs(int u, int v){// 父节点，子节点，dfs每个父节点有几个叶节点
+	for(int i = h[v]; i != -1; i = ne[i]){
+		int j = e[i];
+		if(j == u) continue;
+		dfs(v, j);
+		p[v] += p[j]; //回溯更新
+	}
+}
+void solve(){
+	int n, a, b; cin >> n;
+	memset(h, -1, sizeof h);
+	for(int i = 2; i <= n; ++i){
+		cin >> b;
+		add(i, b), add(b, i);
+		++ du[i], ++ du[b];
+	}
+	for(int i = 2; i <= n; ++i)
+		if(du[i] == 1) p[i] = 1;
+		dfs(0, 1);
+		sort(p + 1, p + 1 + n);
+		if(n == 1){cout << 1; return ;}
+	for(int i = 1; i <= n; ++ i) cout << p[i] << " \n"[i == n];
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1;
+	//cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
+# [4-C. Planar Reflections](https://codeforces.com/problemset/problem/1498/C)
+### DP
+
+<details>
+<summary>点击查看解析</summary>
+
+
+
+**提示 1：** 一个粒子可以分裂成几个粒子跟哪些变量有关？
+
+**提示 2：** 将提示 1 中的变量视为状态，考虑从一个状态的粒子下一次碰撞时，可以变成哪些其他的状态的粒子。
+
+我们考虑提示 1 中的问题，一个粒子能分裂成几个粒子跟以下变量有关：
+
+- Decay age，即题目中给出的 D(x) 。
+    
+- 前面有多少块板子。
+    
+- 后面有多少块板子。这两个变量是因为粒子最后会产生穿过板子或者反弹的粒子，这两个粒子后续的情况跟其前面 / 后面的板子数量有关。
+    
+
+而事实上，前面和后面的板子数量之和是给定的，因此总共实际上是两个状态。
+
+设前面有 i 块板子，且 D(x)=j 的粒子能产生 dp[i]  [j] 个粒子，那么其经过一次穿过板子后，会变成两个粒子，分别为：
+
+- 前面还有 i−1 块板子，且 D(x)=j 。
+    
+- 前面还有 n−i 块板子，且 D(x)=j−1 。
+    
+于是可得 dp[ i ]  [ j ]=dp[i−1]  [j]+dp[n−i]  [j−1] 。因此我们只需按照 j 从小到大， i 从小到大的顺序进行递推即可。
+
+边界情况是 dp[0]  [0]=1 ，其中 j≠0 。这是显然的。
+
+时间复杂度为 O(nk) .
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e3+5, mod = 1e9 + 7;
+int dp[N][N]; // 对于 i 粒子前面有 j 个板子的总粒子数
+void solve(){
+    int n, k; cin >> n >> k;
+    for(int i = 1; i <= n; ++i) dp[1][i] = 1;// 1粒子穿n个板子
+    for(int i = 1; i <= k; ++i) dp[i][0] = 1;// i 粒子穿0个板子
+    for(int i = 1; i <= k; ++i)//粒子
+        for(int j =1; j <= n; ++j)//板子
+            dp[i][j] = (dp[i - 1][n - j] + dp[i][j - 1]) % mod;
+            //反弹的粒子方向改变，所有它前面是n-j个， 自前面是i-1个
+    cout << dp[k][n] << endl;
+}
+signed main(){
+    ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+    int T = 1;
+    cin >> T;
+    while(T--)solve();
+    return 0;
+}
+```
+# [5-B2. K for the Price of One (Hard Version)](https://codeforces.com/problemset/problem/1282/B2)
+### 贪心+DP
+
+<details>
+<summary>点击查看解析</summary>
+
+**提示 1：** 我们先假设总共买 m 个物品，这 m 个物品应该怎么选？
+
+**提示 2：** 选完 m 个物品后，这些物品应该怎么买？
+
+**提示 3：** 如何快速计算 m 从 1∼n 之间所有取值下的购买成本？
+
+接下来的题解按照上述提示的逻辑展开。
+
+首先，假设我们已经确定了要购买 m 个物品，那么我们一定挑选其中最便宜的 m 个。
+
+而如果确定了买哪些物品，怎么以最低价买到它们呢？我们一定是用优惠政策，即买一个可以赠 k−1 个的政策。
+
+最贵的物品我们一定只能花钱买，于是我们花掉这一笔；接下来我们选择赠品一定选择剩下的物品中最贵的 k−1 个。就这样，不断下去，直到最后的物品数量不足 k 个，就只能不使用政策，一个一个买入了。
+
+在上述贪心策略下，我们可以 O(n) 算出每一个 m 的成本。但需要注意的是，本题 **不满足贪心条件** ，因为不是买的越多花的钱就一定越多，比方说 k−1 的情况下需要买 k−1 个物品，而 k 的情况下只需要购买一个。
+
+所以我们仍然需要计算 m 从 1∼n 的全部取值。这件事怎么做呢？其实上面的贪心策略已经告诉了我们——
+
+- 如果 m 不超过 k ，则这些物品全买，即是排序后价格的前缀和。
+    
+- 否则，最后 k 个物品的总花费等于最贵的物品的价格，剩余的 m−k 个物品成本之前已经算过了。用 DP 形式表述，即： dp[m]=dp[m−k]+nums[m] .
+    
+
+于是，我们计算出每个 m 对应的成本，并找到最大的不超过 p 的下标即可。
+
+时间复杂度为 O(nlog⁡n) .
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+//#define int long long
+const int N = 2e5 + 7, mod = 1e9 + 7;
+int n, k, cnt, f[N];
+void solve(){
+	int n, p, k, ans=0; cin >> n >> p >> k;
+	vector<int> a(n + 1);
+	memset(f, 0x3f, sizeof f);
+	f[0] = 0;
+	for(int i = 1; i <= n; ++ i) cin >> a[i];
+	sort(a.begin() + 1, a.end());
+	for(int i = 1; i <= n; ++i){
+		if(i < k)f[i] = min(f[i], f[i-1] + a[i]);
+		else f[i] = min(f[i], f[i-k] + a[i]);
+	}
+	for(int i = n; i; --i){
+		if(f[i] <= p){
+			cout<< i << endl;
+			return ;
+		}
+	}
+	cout << 0 << endl;
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1;
+	cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
+
+# [6-C.Permutation Game](https://codeforces.com/problemset/problem/1033/C)
+### 博弈论+DP
+
+<details>
+<summary>点击查看解析</summary>
+
+
+假设当前点为 x，下一个点为 y，那么如果 y 存在任意一个必败状态，那么 x 必胜；如果 y 为必胜状态，那么 x 必败。
+
+解释一下：如果 y 有必败状态，那么 x 可以把这个必败留给后手，即先手必胜；如果 y 必胜，那么 x 无论怎么走都会让后手必胜即先手必败。
+
+因为题目保证没有平局，所以转移状态一定是一个 DAG，放心跑就行了。
+
+我们直接枚举 x 和其所有的倍数 y 转移即可。
+
+8
+3 6 5 4 2 7 1 8
+
+![18add009305cc05741aa428865d7eaf3](https://img2024.cnblogs.com/blog/3627480/202508/3627480-20250810140919928-1435953296.jpg)
+
+
+</details>
+
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N = 1e5 + 7;
+int n, a[N], p[N], f[N];
+void solve() {
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        cin >> a[i];    p[a[i]] = i;
+    }
+
+    for (int i = n; i >= 1; i--) {//对于当前的数字
+	//从后往前遍历是因为较小的数可用有较大的数的结果推来，因为后面的数如最后应该数结果可已知
+        int x = p[i];  // 当前数字的位置
+        int y = p[i];  // 用于遍历的位置
+        
+        // 第一个循环：调整y到不超过a[x]的最大可能值
+        while (y > i) {
+            y -= i;//找到与i的倍数相关的y的最小值， 相当于初始化y
+        }
+        //f[x]是用来记录是否至少有一个（对手的）必败态
+        // 第二个循环：遍历所有可能的跳跃位置
+        for (int step = y; step <= n; step += i) {
+            if (i < a[step]) {  // 只能跳到更大的数字
+                f[x] |= !f[step];  // 如果对手必输，则当前玩家必胜
+				//当 !f[step] = 1 时（即 step 对应的局面是必败态），将 f[x] 设为 1（表示 x 对应的局面是必胜态）；
+				//当 !f[step] = 0 时，f[x] 保持原值不变。
+            }
+        }
+    }
+    for (int i = 1; i <= n; i++) {
+        cout << (f[i] ? 'A' : 'B');
+    }
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1;
+	// cin >> T;
+	while(T--)solve();
+	return 0;
+}
+```
+
+# [7-C. Sequence Transformation](https://codeforces.com/problemset/problem/1059/C)
+### 数学+约数
+
+<details>
+<summary>点击查看解析</summary>
+相邻的两个数都是互质的，所以刚开始全部是 1，后面才有可能出现比 1 的数，为了让 1 的个数尽可能少，我们把所有奇数删掉，这样有 2n​ 个 1。后面开始出现 2，为了让 2 也尽可能的少，我们把所有非 4 的倍数删掉，这样有 4n​ 个 2，后面就开始出现 4 了。以此类推，我们每次隔一个数删一个，删到最后一定是字典序最大的序列。
+
+但有一个地方需要注意，如果最后剩下三个数 x≤2x≤3x，此时如果隔一个删一个，序列就会变成 x,x,2x，不如直接按顺序删得到的 x,x,3x 更优。特判一下就好啦。
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+//#define int long long
+const int N = 1e5 + 7, mod = 1e9 + 7;
+int n, k, cnt, f[N];
+void solve(){
+	int n, cnt = 0, f = 0; cin >> n;
+	int t = n;
+	if(n == 1)cout << 1 << endl;
+	else  if(n == 2)cout <<"1 2\n";
+	else if(n == 3)cout<<"1 1 3\n";
+	else if(n == 4)cout <<"1 1 2 4\n"; 
+	else while(t>1){
+		t = (t + 1) >> 1;
+		if(t == 1)break;
+		for(int i = 1; i <= t; ++ i){
+			++f;
+			cout << (1 << cnt) <<" \n"[f==n];
+		}
+		++cnt;
+	}
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1; 
+	//cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
+
+# [8-C. Tennis Championship](https://codeforces.com/contest/735/problem/C)
+### 组合数学+DP
+
+<details>
+<summary>点击查看解析</summary>
+
+我们通过枚举发现产生打了1场的winner至少需要2个人，产生打了2场的winner至少需要3个人，产生
+
+打了3场的winner至少需要5个人…，那么每次产生增加一场的wiinner(设打了i场)可由打了（i-1）场的
+
+和（i-2）场的两个winner对决产生，这样需要的人户最少，可用f[i]表示打i 场需要的最少人数递推，
+
+找到最接近n 人能打的场数即为答案, 注意对于大数n要处理一下
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+#define int long long
+const int N = 1e5 + 7, mod = 1e9 + 7;
+int n, k, cnt, f[N];
+void solve(){
+	int n; cin >> n; //打i场需要的人数
+	f[1] = 2; f[0] = 1; int t = n;
+	if(n > 1e5)t=(int)sqrt(n);
+	for(int i = 2; i <= t; ++i){
+		f[i] = f[i-1] + f[i-2];
+		if(f[i] > n) { cout << i - 1 << endl; return ;}
+		//cout << f[i] << endl;
+	}
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1;
+	//cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
+# [9-C. Alyona and the Tree](https://codeforces.com/contest/682/problem/C)
+### DFS+树形结构
+
+<details>
+<summary>点击查看解析</summary>
+
+
+**提示 1：** 题目中表面上是对 v 加了限制，实际上是对 u 进行了限制。具体是什么限制？
+
+**提示 2：** 在一个节点 u 不满足要求的情况下，整个子树都应该被删掉。
+
+题目中给的条件是，任何一个点 v 到其子树内节点 u 的距离都不超过 au 。但是子树是在动的，所以这个定义并不容易直接考虑。
+
+反过来考虑，一旦有一个节点 u 到任何一个祖先节点 v 的距离超过了 au ，那这个节点就不能要了。
+
+因为祖先节点是固定的，所以这个刻画是更好处理的。
+
+**而一旦这个节点不要了，这个节点对应的子树也就都不能要了。**
+所以要删就删含有更少节点的子树而不是父节点
+
+接下来唯一一件事就是，求出 u 到其祖先的最远距离。
+
+而这件事跟最大子段和的求法极其类似。考虑其父节点到祖先的对应的最远距离，则该节点如果到达父节点的祖先，则距离最大值为 “父节点的计算结果” 加上该点到父节点的距离；否则，答案就是到父节点的距离。使用这个 DP 关系即可。
+
+而这个 DP 关系可以在从 1 开始进行 DFS 的时候直接使用，而一旦遇到不合法的位置不往下 DFS 即可，我们直接考虑所有 DFS 过程中不经过的点的个数，即为答案。
+时间复杂度为 O(n) 。
+
+</details>
+
+
+```cpp
+#include<bits/stdc++.h>
+using namespace std;
+#define endl '\n'
+#define int long long
+//建树用双向边 + 父节点标记 更不容易出错
+const int N = 1e5 + 7;
+int p[N], f[N], cnt;// 子节点到父节点的距离
+int e[N << 1], ne[N << 1], w[N << 1], h[N], idx;
+void add(int a, int b, int c){
+	w[idx] = c;
+	e[idx] = b;
+	ne[idx] = h[a];
+	h[a] = idx++;
+}
+void dfs(int u, int v){// 父节点，子节点
+	 for(int i = h[v]; ~i; i = ne[i]){// i是边编号
+		int j = e[i];
+		if(j == u) continue;
+		f[j] = max(f[v] + w[i], w[i]);// v!
+		dfs(v, j);
+	}
+}
+void check(int u, int v){
+	 for(int i = h[v];  ~i; i = ne[i]){
+		int j = e[i];
+		if(j == u) continue;
+		if(f[j] > p[j]) continue;//因为f[i]是最大距离所以就不用再往下遍历了，直接剪掉
+		++cnt;
+		check(v, j);
+	 }
+
+}
+void solve(){
+	memset(h, -1, sizeof h);
+	int n, a, c; cin >> n;
+	for(int i = 1; i <= n; ++i) cin >> p[i];
+	for(int i = 1; i < n; ++i){
+		cin >> a >> c;
+		add(i + 1, a, c), add(a, i + 1, c); 
+	}
+	dfs(0, 1); check(0, 1); // 虚拟父节点0到根节点
+	cout << n - cnt - 1 << endl;// 因为引入的虚拟根节点0，所以会多一个cnt++
+}
+signed main(){
+	ios::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+	int T = 1; 
+	//cin >> T;
+	while(T--) solve();
+	return 0;
+}
+```
